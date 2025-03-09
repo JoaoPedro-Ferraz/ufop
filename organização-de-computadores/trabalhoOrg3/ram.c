@@ -34,3 +34,22 @@ void imprimirRAM(RAM *ram) {
         printf("\n");
     }
 }
+
+void carregarMemoriaExterna(const char *nomeArquivo, BlocoMemoria *bloco, int endereco) {
+    FILE *file = fopen(nomeArquivo, "rb");
+    if (file) {
+        fseek(file, endereco * sizeof(BlocoMemoria), SEEK_SET);
+        fread(bloco, sizeof(BlocoMemoria), 1, file);
+        fclose(file);
+    }
+}
+
+void salvarMemoriaExterna(const char *nomeArquivo, BlocoMemoria *bloco, int endereco) {
+    FILE *file = fopen(nomeArquivo, "r+b");
+    if (!file) {
+        file = fopen(nomeArquivo, "wb");
+    }
+    fseek(file, endereco * sizeof(BlocoMemoria), SEEK_SET);
+    fwrite(bloco, sizeof(BlocoMemoria), 1, file);
+    fclose(file);
+}

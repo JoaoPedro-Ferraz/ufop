@@ -93,6 +93,11 @@ int main()
     // Executar o programa carregado
     executarPrograma(cpu, ram, politica, tam1, tam2, tam3);
 
+    // Salvar dados de volta para a memória externa, se necessário
+    for (int i = 0; i < numInstrucoes; i++) {
+        salvarMemoriaExterna("memoria_externa.bin", &ram->memoria[i], i);
+    }
+
     // Libera recursos
     liberarCPU(cpu);
     free(ram->memoria);

@@ -53,11 +53,33 @@ BlocoMemoria buscarNasMemorias(Endereco *e, RAM *ram, BlocoMemoria *cache1, int 
     }
 
     // Se não estiver em nenhuma cache, busca na RAM (miss em todas as caches)
-    BlocoMemoria blocoRAM = ram->memoria[e->endBloco];  // Busca o bloco na RAM
-    blocoRAM.custo = 11110;  // Custo de acessar a RAM
-    blocoRAM.cacheHit = 4;  // Miss em todas as caches
-    // Move o bloco da RAM para cache 3 e retorna
-    return movRamCache3(conjuntoCache1, conjuntoCache2, conjuntoCache3, cache1, cache2, cache3, ram, e, blocoRAM.custo, politica);
+    if (e->endBloco < ram->tamanho) {
+        BlocoMemoria blocoRAM = ram->memoria[e->endBloco];
+        blocoRAM.custo = 11110;
+        blocoRAM.cacheHit = 4;
+
+        // Mover da RAM para cache3 e retornar o bloco
+        return movRamCache3(conjuntoCache1, conjuntoCache2, conjuntoCache3, cache1, cache2, cache3, ram, e, blocoRAM.custo, politica);
+    }
+
+    // Se não estiver em nenhuma cache e nem na RAM, busque na memória externa
+    BlocoMemoria blocoExterno;
+    carregarMemoriaExterna("memoria_externa.bin", &blocoExterno, e->endBloco);
+
+    if (blocoExterno.endBloco != -1) {
+        blocoExterno.custo = 11110;  // Custo de acessar a memória externa
+        blocoExterno.cacheHit = 5;    // Indica um miss em todas as caches
+
+        // Mover o bloco da memória externa para a RAM
+        moverExternaParaRam(ram, "memoria_externa.bin", e->endBloco);
+
+        // Mover o bloco da RAM para cache3 e retornar
+        return movRamCache3(conjuntoCache1, conjuntoCache2, conjuntoCache3, cache1, cache2, cache3, ram, e, blocoExterno.custo, politica);
+    }
+
+    // Se não encontrou em lugar nenhum, retorne um bloco padrão ou um erro
+    printf("Erro: Bloco %d não encontrado na RAM ou na memória externa.\n", e->endBloco);
+    exit(1);  // Termina o programa em caso de erro
 }
 
 // Movimenta um bloco do cache2 para o cache1
@@ -98,6 +120,21 @@ BlocoMemoria movRamCache3(int conjuntoCache1, int conjuntoCache2, int conjuntoCa
         return movCache3Cache1(conjuntoCache1, conjuntoCache2, indexCache3, cache1, cache2, cache3, custo);
     }
 }
+
+void moverExternaParaRam(RAM *ram, const char *nomeArquivo, int enderecoBloco) {
+    BlocoMemoria blocoExterno;
+    carregarMemoriaExterna(nomeArquivo, &blocoExterno, enderecoBloco);
+    
+    if (blocoExterno.endBloco != -1) {
+        // Se o bloco foi encontrado na memória externa, copie para a RAM
+        ram->memoria[enderecoBloco] = blocoExterno;
+        ram->memoria[enderecoBloco].atualizado = 1;  // Indica que foi atualizado
+        printf("Bloco %d movido da memória externa para a RAM.\n", enderecoBloco);
+    } else {
+        printf("Erro: Bloco %d não encontrado na memória externa.\n", enderecoBloco);
+    }
+}
+
 
 // Encontra o bloco menos usado (LRU) dentro de um conjunto
 int findLRU(BlocoMemoria *cache, int conjunto) {

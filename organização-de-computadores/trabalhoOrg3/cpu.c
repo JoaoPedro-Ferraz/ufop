@@ -28,6 +28,23 @@ CPU* inicializarCPU(int tamCache1, int tamCache2, int tamCache3) {
 
 void executarPrograma(CPU *cpu, RAM *ram, char *politica, int tam1, int tam2, int tam3) {
     while (1) {
+
+        // Verifica se uma interrupção ocorreu com 10% de chance
+        if (rand() % 10 == 0) {
+            printf("Interrupção detectada!\n");
+
+            // Salva o contexto da CPU
+            cpu->contexto_PC = cpu->PC;
+            cpu->contexto_registrador1 = cpu->registrador1;
+            cpu->contexto_registrador2 = cpu->registrador2;
+            cpu->contexto_registrador3 = cpu->registrador3;
+
+            // Executa o tratador de interrupção
+            tratadorDeInterrupcao(cpu, ram);
+
+            continue;  // Após a interrupção, retoma o programa principal
+        }
+
         Instrucao inst = cpu->programa[cpu->PC];
         cpu->opcode = inst.opcode;
 
@@ -151,6 +168,7 @@ void executarPrograma(CPU *cpu, RAM *ram, char *politica, int tam1, int tam2, in
         cpu->PC++;
     }
 
+
     // Resultados
     
     // HITS : vezes que a CPU encontrou os dados diretamente na cache de nível 1 (L1).
@@ -170,6 +188,28 @@ void executarPrograma(CPU *cpu, RAM *ram, char *politica, int tam1, int tam2, in
     
     exit(0);
 }
+
+void tratadorDeInterrupcao(CPU *cpu, RAM *ram) {
+    printf("Tratador de interrupção iniciado...\n");
+
+    // 1. Salvamento de Contexto
+    printf("Salvando contexto da CPU...\n");
+    cpu->contexto_PC = cpu->PC;
+    cpu->contexto_registrador1 = cpu->registrador1;
+    cpu->contexto_registrador2 = cpu->registrador2;
+    cpu->contexto_registrador3 = cpu->registrador3;
+
+    // 2. Restauração de Contexto
+    printf("Restaurando contexto da CPU...\n");
+    cpu->PC = cpu->contexto_PC;
+    cpu->registrador1 = cpu->contexto_registrador1;
+    cpu->registrador2 = cpu->contexto_registrador2;
+    cpu->registrador3 = cpu->contexto_registrador3;
+
+    printf("Tratador de interrupção finalizado. Retomando execução normal.\n");
+    cpu->interrupcao = 0;  // Interrupção finalizada
+}
+
 
 void liberarCPU(CPU *cpu) {
     free(cpu->cache1);
