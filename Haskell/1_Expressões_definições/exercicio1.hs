@@ -1,2 +1,7 @@
-movRetUni :: Float -> Float -> Float -> Float -> Float
-movRetUni s a t v =  s + v * t + (0.5 * a * t ** 2)
+module Main where
+main :: IO()
+main = do
+    let x = 3
+    let x = 2
+    print x
+
